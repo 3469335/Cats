@@ -114,46 +114,64 @@ npm run start            # Запуск production-сервера
 
 1. Убедитесь, что все изменения закоммичены в Git
 2. Создайте репозиторий на GitHub/GitLab/Bitbucket
+3. Убедитесь, что база данных NeonDB создана и доступна
 
 ### 2. Деплой
 
 1. Перейдите на [Vercel](https://vercel.com)
 2. Импортируйте ваш репозиторий
-3. Добавьте переменную окружения:
+3. **ВАЖНО**: Добавьте переменную окружения перед деплоем:
    - **Name**: `DATABASE_URL`
-   - **Value**: ваша строка подключения к NeonDB
+   - **Value**: ваша строка подключения к NeonDB (получите из Neon Dashboard)
+   - Формат: `postgresql://user:password@host/database?sslmode=require`
 4. Нажмите "Deploy"
 
-### 3. Настройка Prisma на Vercel
+### 3. Настройка базы данных после деплоя
 
-Vercel автоматически выполнит `postinstall` скрипт, который сгенерирует Prisma Client.
+После успешного деплоя необходимо применить схему к базе данных:
 
-После первого деплоя выполните миграцию:
+**Вариант 1: Через Vercel CLI (рекомендуется)**
 
 ```bash
-npx prisma migrate deploy
+# Установите Vercel CLI (если еще не установлен)
+npm i -g vercel
+
+# Войдите в аккаунт
+vercel login
+
+# Подключите проект
+vercel link
+
+# Примените схему к production БД
+vercel env pull .env.production
+npx prisma db push --schema=./prisma/schema.prisma
 ```
 
-Или используйте `db:push` для применения схемы:
+**Вариант 2: Локально с production DATABASE_URL**
 
 ```bash
+# Временно установите production DATABASE_URL
+export DATABASE_URL="your-production-neon-url"
+# или в Windows PowerShell:
+# $env:DATABASE_URL="your-production-neon-url"
+
+# Примените схему
 npx prisma db push
-```
 
-### 4. Заполнение базы данных
-
-После деплоя выполните seed (локально с указанием production DATABASE_URL):
-
-```bash
-DATABASE_URL="your-production-url" npm run db:seed
-```
-
-Или через Vercel CLI:
-
-```bash
-vercel env pull
+# Заполните базу данных
 npm run db:seed
 ```
+
+### 4. Проверка деплоя
+
+После применения схемы откройте ваш сайт на Vercel. Если всё настроено правильно:
+- Страница загрузится без ошибок
+- Вы увидите либо список заметок, либо сообщение о том, что заметок нет
+- Если видите ошибку подключения к БД - проверьте `DATABASE_URL` в настройках Vercel
+
+### 5. Автоматизация (опционально)
+
+Для автоматического применения миграций можно использовать Vercel Post-Deploy Hook или GitHub Actions.
 
 ## Проверка работы
 

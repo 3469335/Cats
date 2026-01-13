@@ -7,15 +7,18 @@ async function getNotes() {
         createdAt: 'desc',
       },
     })
-    return notes
+    return { notes, error: null }
   } catch (error) {
     console.error('Error fetching notes:', error)
-    return []
+    return { 
+      notes: [], 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    }
   }
 }
 
 export default async function Home() {
-  const notes = await getNotes()
+  const { notes, error } = await getNotes()
 
   return (
     <div className="container">
@@ -24,7 +27,15 @@ export default async function Home() {
         <p>Минимальный проект Next.js + Prisma + NeonDB (PostgreSQL)</p>
       </div>
 
-      {notes.length === 0 ? (
+      {error ? (
+        <div className="empty-state">
+          <p style={{ color: '#d32f2f' }}>
+            Ошибка подключения к базе данных: {error}
+            <br />
+            <small>Проверьте настройку DATABASE_URL в переменных окружения Vercel</small>
+          </p>
+        </div>
+      ) : notes.length === 0 ? (
         <div className="empty-state">
           <p>Заметок пока нет. Запустите seed скрипт для создания тестовых данных.</p>
         </div>
