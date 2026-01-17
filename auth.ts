@@ -3,9 +3,43 @@ import Google from 'next-auth/providers/google'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import { prisma } from '@/lib/prisma'
 
+// Проверка конфигурации при инициализации
+const authConfig = {
+  hasAuthSecret: !!process.env.AUTH_SECRET,
+  hasClientId: !!process.env.GOOGLE_CLIENT_ID,
+  hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
+  hasDatabaseUrl: !!process.env.DATABASE_URL,
+}
+
+if (!authConfig.hasAuthSecret) {
+  console.error('[AUTH] AUTH_SECRET не установлен!')
+}
+
+if (!authConfig.hasClientId) {
+  console.error('[AUTH] GOOGLE_CLIENT_ID не установлен!')
+}
+
+if (!authConfig.hasClientSecret) {
+  console.error('[AUTH] GOOGLE_CLIENT_SECRET не установлен!')
+}
+
+if (!authConfig.hasDatabaseUrl) {
+  console.error('[AUTH] DATABASE_URL не установлен!')
+}
+
+// Инициализация adapter с обработкой ошибок
+let adapter
+try {
+  adapter = PrismaAdapter(prisma)
+} catch (error) {
+  console.error('[AUTH] Ошибка при инициализации PrismaAdapter:', error)
+  throw new Error('Не удалось инициализировать PrismaAdapter. Проверьте подключение к базе данных.')
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  adapter,
   secret: process.env.AUTH_SECRET,
+  debug: process.env.NODE_ENV === 'development',
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -14,21 +48,39 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   callbacks: {
     async session({ session, token, user }) {
-      // В NextAuth v5 используем token или user для получения ID
-      if (session.user) {
-        session.user.id = (user?.id as string) || (token?.sub as string) || ''
+      try {
+        // В NextAuth v5 используем token или user для получения ID
+        if (session.user) {
+          session.user.id = (user?.id as string) || (token?.sub as string) || ''
+        }
+        return session
+      } catch (error) {
+        console.error('[AUTH] Error in session callback:', error)
+        throw error
       }
-      return session
     },
     async jwt({ token, user, account }) {
-      // Сохраняем user ID в token при первом входе
-      if (user) {
-        token.id = user.id
+      try {
+        // Сохраняем user ID в token при первом входе
+        if (user) {
+          token.id = user.id
+        }
+        return token
+      } catch (error) {
+        console.error('[AUTH] Error in jwt callback:', error)
+        throw error
       }
-      return token
     },
   },
   pages: {
     signIn: '/login',
+  },
+  events: {
+    async signIn({ user, account, profile }) {
+      console.log('[AUTH] Sign in:', { userId: user?.id, email: user?.email, provider: account?.provider })
+    },
+    async signOut({ session, token }) {
+      console.log('[AUTH] Sign out:', { userId: session?.user?.id })
+    },
   },
 })
