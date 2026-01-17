@@ -10,10 +10,113 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  name      String?
+  image     String?
+  createdAt DateTime  @default(now())
+  notes     Note[]
+  cats      Cat[]
+  votes     Vote[]
+  accounts  Account[]
+  sessions  Session[]
+
+  @@map("users")
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
 model Note {
   id        String   @id @default(uuid())
+  ownerId   String
   title     String
   createdAt DateTime @default(now())
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
+  @@index([ownerId])
   @@map("notes")
+}
+
+model Category {
+  id       String @id @default(cuid())
+  category String
+  cats     Cat[]
+
+  @@map("categories")
+}
+
+model Cat {
+  id          String     @id @default(uuid())
+  ownerId     String
+  title       String
+  content     String
+  description String?
+  categoryId  String
+  visibility  Visibility @default(PRIVATE)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  publishedAt DateTime?
+  owner       User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  category    Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  votes       Vote[]
+  tags        Tag[]
+
+  @@index([ownerId, updatedAt])
+  @@index([visibility, createdAt])
+  @@map("cats")
+}
+
+model Tag {
+  id   String @id @default(cuid())
+  name String @unique
+  cats Cat[]
+
+  @@map("tags")
+}
+
+model Vote {
+  id        String   @id @default(uuid())
+  userId    String
+  catId     String
+  value     Int      @default(1)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cat       Cat      @relation(fields: [catId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, catId])
+  @@index([catId])
+  @@index([userId])
+  @@map("votes")
+}
+
+enum Visibility {
+  PRIVATE
+  PUBLIC
 }
