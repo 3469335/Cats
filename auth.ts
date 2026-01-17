@@ -74,8 +74,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async signIn({ user, account, profile }) {
       console.log('[AUTH] Sign in:', { userId: user?.id, email: user?.email, provider: account?.provider })
     },
-    async signOut({ token }) {
-      console.log('[AUTH] Sign out:', { userId: token?.sub || token?.id })
+    async signOut() {
+      // В NextAuth v5 событие signOut не принимает параметры
+      console.log('[AUTH] Sign out')
     },
   },
 })
