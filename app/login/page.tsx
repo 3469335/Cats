@@ -2,9 +2,12 @@
 
 import { signIn } from 'next-auth/react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 
-export default function LoginPage() {
+// Страница входа должна быть динамической
+export const dynamic = 'force-dynamic'
+
+function LoginForm() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -152,5 +155,17 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="container" style={{ maxWidth: '400px', margin: '4rem auto', textAlign: 'center' }}>
+        <p>Загрузка...</p>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }
