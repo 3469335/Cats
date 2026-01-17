@@ -14,24 +14,10 @@ if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma
 }
 
-// Закрываем соединение при завершении процесса (только для Node.js, не для Edge Runtime)
-// Обернуто в try-catch для безопасности в Edge Runtime
-try {
-  if (
-    typeof process !== 'undefined' &&
-    process.on &&
-    typeof window === 'undefined' &&
-    // Edge Runtime не имеет process.versions.node
-    typeof (process as any).versions?.node !== 'undefined'
-  ) {
-    process.on('beforeExit', async () => {
-      await prisma.$disconnect()
-    })
-  }
-} catch (error) {
-  // Игнорируем ошибки в Edge Runtime
-  // В serverless окружениях соединения закрываются автоматически
-}
+// Примечание: process.on убран, так как:
+// 1. Edge Runtime не поддерживает process.on
+// 2. В serverless окружениях (Vercel) соединения закрываются автоматически
+// 3. Prisma Client управляет соединениями автоматически
 
 // Проверка и переподключение к базе данных
 export async function ensureConnection(): Promise<boolean> {

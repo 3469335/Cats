@@ -8,10 +8,10 @@ export async function GET() {
     const hasDatabaseUrl = !!process.env.DATABASE_URL
     const isConnected = await ensureConnection()
     
-    // Пробуем выполнить простой запрос
+    // Пробуем выполнить простой запрос (используем $queryRaw вместо конкретной модели)
     let canQuery = false
     try {
-      await prisma.user.count()
+      await prisma.$queryRaw`SELECT 1`
       canQuery = true
     } catch (error) {
       console.error('Query test failed:', error)
