@@ -5,15 +5,29 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('Seeding database...')
 
-  // Очистка существующих данных
-  await prisma.note.deleteMany()
+  // Создание тестового пользователя (или использование существующего)
+  const user = await prisma.user.upsert({
+    where: { email: 'seed@example.com' },
+    update: {},
+    create: {
+      email: 'seed@example.com',
+      name: 'Test User',
+    },
+  })
 
-  // Создание тестовых записей
+  console.log(`User: ${user.email} (${user.id})`)
+
+  // Очистка существующих данных
+  await prisma.note.deleteMany({
+    where: { ownerId: user.id },
+  })
+
+  // Создание тестовых записей с ownerId
   const notes = await prisma.note.createMany({
     data: [
-      { title: 'Первая заметка' },
-      { title: 'Вторая заметка' },
-      { title: 'Третья заметка' },
+      { title: 'Первая заметка', ownerId: user.id },
+      { title: 'Вторая заметка', ownerId: user.id },
+      { title: 'Третья заметка', ownerId: user.id },
     ],
   })
 
