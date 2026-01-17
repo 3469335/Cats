@@ -27,14 +27,9 @@ if (!authConfig.hasDatabaseUrl) {
   console.error('[AUTH] DATABASE_URL не установлен!')
 }
 
-// Инициализация adapter с обработкой ошибок
-let adapter
-try {
-  adapter = PrismaAdapter(prisma)
-} catch (error) {
-  console.error('[AUTH] Ошибка при инициализации PrismaAdapter:', error)
-  throw new Error('Не удалось инициализировать PrismaAdapter. Проверьте подключение к базе данных.')
-}
+// Инициализация adapter
+// PrismaAdapter создается синхронно и не требует подключения к БД на момент инициализации
+const adapter = PrismaAdapter(prisma)
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter,
