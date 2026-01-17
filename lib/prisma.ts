@@ -4,11 +4,40 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
+// Инициализация Prisma Client с обработкой ошибок
+let prismaInstance: PrismaClient
+
+try {
+  prismaInstance = globalForPrisma.prisma ?? new PrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   })
+
+  if (process.env.NODE_ENV !== 'production') {
+    globalForPrisma.prisma = prismaInstance
+  }
+
+  // Проверяем подключение к БД при инициализации
+  prismaInstance.$connect().catch((error: any) => {
+    console.error('[PRISMA] Ошибка подключения к БД при инициализации:', error)
+    console.error('[PRISMA] Error details:', {
+      message: error?.message,
+      code: error?.code,
+      meta: error?.meta,
+    })
+  })
+} catch (error: any) {
+  console.error('[PRISMA] Критическая ошибка при создании PrismaClient:', error)
+  console.error('[PRISMA] Error details:', {
+    message: error?.message,
+    stack: error?.stack,
+  })
+  // Создаем экземпляр даже при ошибке, чтобы приложение могло запуститься
+  prismaInstance = new PrismaClient({
+    log: ['error'],
+  })
+}
+
+export const prisma = prismaInstance
 
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma

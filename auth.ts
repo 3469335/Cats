@@ -27,9 +27,20 @@ if (!authConfig.hasDatabaseUrl) {
   console.error('[AUTH] DATABASE_URL не установлен!')
 }
 
-// Инициализация adapter
-// PrismaAdapter создается синхронно и не требует подключения к БД на момент инициализации
-const adapter = PrismaAdapter(prisma)
+// Инициализация adapter с обработкой ошибок
+let adapter
+try {
+  adapter = PrismaAdapter(prisma)
+  console.log('[AUTH] PrismaAdapter инициализирован успешно')
+} catch (error: any) {
+  console.error('[AUTH] Ошибка при инициализации PrismaAdapter:', error)
+  console.error('[AUTH] Error details:', {
+    message: error?.message,
+    stack: error?.stack,
+    code: error?.code,
+  })
+  throw error
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter,
@@ -49,9 +60,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           session.user.id = (user?.id as string) || (token?.sub as string) || ''
         }
         return session
-      } catch (error) {
+      } catch (error: any) {
         console.error('[AUTH] Error in session callback:', error)
-        throw error
+        console.error('[AUTH] Session error details:', {
+          message: error?.message,
+          stack: error?.stack,
+          session: session?.user?.email,
+        })
+        // Возвращаем session даже при ошибке, чтобы не блокировать авторизацию
+        return session
       }
     },
     async jwt({ token, user, account }) {
@@ -61,9 +78,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.id = user.id
         }
         return token
-      } catch (error) {
+      } catch (error: any) {
         console.error('[AUTH] Error in jwt callback:', error)
-        throw error
+        console.error('[AUTH] JWT error details:', {
+          message: error?.message,
+          stack: error?.stack,
+          userId: user?.id,
+        })
+        // Возвращаем token даже при ошибке
+        return token
       }
     },
   },
@@ -72,11 +95,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   events: {
     async signIn({ user, account, profile }) {
-      console.log('[AUTH] Sign in:', { userId: user?.id, email: user?.email, provider: account?.provider })
+      try {
+        console.log('[AUTH] Sign in:', { 
+          userId: user?.id, 
+          email: user?.email, 
+          provider: account?.provider,
+          accountId: account?.providerAccountId,
+        })
+      } catch (error: any) {
+        console.error('[AUTH] Error in signIn event:', error)
+        console.error('[AUTH] SignIn event error details:', {
+          message: error?.message,
+          stack: error?.stack,
+          userId: user?.id,
+        })
+      }
     },
     async signOut() {
-      // В NextAuth v5 событие signOut не принимает параметры
-      console.log('[AUTH] Sign out')
+      try {
+        console.log('[AUTH] Sign out')
+      } catch (error: any) {
+        console.error('[AUTH] Error in signOut event:', error)
+      }
     },
   },
 })
