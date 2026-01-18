@@ -6,7 +6,7 @@ import { CreateCatButton } from '@/components/create-cat-button'
 
 export const dynamic = 'force-dynamic'
 
-export default async function DashboardPage({
+export default async function MyCatsPage({
   searchParams,
 }: {
   searchParams: { search?: string }
@@ -20,9 +20,10 @@ export default async function DashboardPage({
 
   const searchQuery = searchParams.search || ''
 
-  // Показываем ВСЕХ котиков в БД (не только пользователя)
+  // Показываем только котиков текущего пользователя
   const cats = await prisma.cat.findMany({
     where: {
+      ownerId: userId,
       ...(searchQuery && {
         OR: [
           { title: { contains: searchQuery, mode: 'insensitive' as const } },
@@ -33,13 +34,6 @@ export default async function DashboardPage({
     },
     include: {
       category: true,
-      owner: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
-      },
       _count: {
         select: { votes: true },
       },
@@ -54,9 +48,10 @@ export default async function DashboardPage({
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Все котики</h1>
+          <h1 className="text-3xl font-bold">Мои котики</h1>
           <p className="text-muted-foreground">Всего: {cats.length}</p>
         </div>
+        <CreateCatButton />
       </div>
       <CatsList initialCats={cats} searchQuery={searchQuery} currentUserId={userId} />
     </div>

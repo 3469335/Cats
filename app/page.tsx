@@ -57,7 +57,7 @@ export default async function Home() {
                   borderRadius: '4px',
                 }}
               >
-                Панель управления
+                Личный кабинет
               </Link>
               <Link
                 href="/my-prompts"

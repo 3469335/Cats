@@ -2,11 +2,10 @@ import { getCurrentUser, getCurrentUserId } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { CatsList } from '@/components/cats-list-client'
-import { CreateCatButton } from '@/components/create-cat-button'
 
 export const dynamic = 'force-dynamic'
 
-export default async function DashboardPage({
+export default async function PublicPage({
   searchParams,
 }: {
   searchParams: { search?: string }
@@ -20,9 +19,10 @@ export default async function DashboardPage({
 
   const searchQuery = searchParams.search || ''
 
-  // Показываем ВСЕХ котиков в БД (не только пользователя)
   const cats = await prisma.cat.findMany({
     where: {
+      ownerId: userId,
+      visibility: 'PUBLIC',
       ...(searchQuery && {
         OR: [
           { title: { contains: searchQuery, mode: 'insensitive' as const } },
@@ -33,13 +33,6 @@ export default async function DashboardPage({
     },
     include: {
       category: true,
-      owner: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
-      },
       _count: {
         select: { votes: true },
       },
@@ -52,11 +45,9 @@ export default async function DashboardPage({
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Все котики</h1>
-          <p className="text-muted-foreground">Всего: {cats.length}</p>
-        </div>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Публичные котики</h1>
+        <p className="text-muted-foreground">Всего: {cats.length}</p>
       </div>
       <CatsList initialCats={cats} searchQuery={searchQuery} currentUserId={userId} />
     </div>

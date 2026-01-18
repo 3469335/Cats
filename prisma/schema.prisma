@@ -81,6 +81,7 @@ model Cat {
   description String?
   categoryId  String
   visibility  Visibility @default(PRIVATE)
+  isFavorite  Boolean    @default(false)
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   publishedAt DateTime?
@@ -91,6 +92,7 @@ model Cat {
 
   @@index([ownerId, updatedAt])
   @@index([visibility, createdAt])
+  @@index([ownerId, isFavorite])
   @@map("cats")
 }
 
