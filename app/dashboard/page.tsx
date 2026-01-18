@@ -3,11 +3,15 @@ import { redirect } from 'next/navigation'
 import { SignOutButton } from '@/components/sign-out-button'
 
 export default async function DashboardPage() {
+  console.log('[DASHBOARD] Loading dashboard page...')
   const user = await getCurrentUser()
 
   if (!user) {
+    console.log('[DASHBOARD] No user found, redirecting to login')
     redirect('/login')
   }
+
+  console.log('[DASHBOARD] User authenticated:', { id: user.id, email: user.email })
 
   return (
     <div className="container" style={{ maxWidth: '1200px', margin: '2rem auto' }}>

@@ -4,6 +4,34 @@ import { prisma } from '@/lib/prisma'
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
+  // Детальная проверка переменных окружения
+  const envDetails = {
+    AUTH_SECRET: {
+      exists: !!process.env.AUTH_SECRET,
+      length: process.env.AUTH_SECRET?.length || 0,
+      prefix: process.env.AUTH_SECRET?.substring(0, 10) || 'NOT_SET',
+    },
+    GOOGLE_CLIENT_ID: {
+      exists: !!process.env.GOOGLE_CLIENT_ID,
+      length: process.env.GOOGLE_CLIENT_ID?.length || 0,
+      prefix: process.env.GOOGLE_CLIENT_ID?.substring(0, 20) || 'NOT_SET',
+    },
+    GOOGLE_CLIENT_SECRET: {
+      exists: !!process.env.GOOGLE_CLIENT_SECRET,
+      length: process.env.GOOGLE_CLIENT_SECRET?.length || 0,
+      prefix: process.env.GOOGLE_CLIENT_SECRET?.substring(0, 10) || 'NOT_SET',
+    },
+    DATABASE_URL: {
+      exists: !!process.env.DATABASE_URL,
+      length: process.env.DATABASE_URL?.length || 0,
+      prefix: process.env.DATABASE_URL?.substring(0, 30) || 'NOT_SET',
+    },
+    NEXTAUTH_URL: {
+      exists: !!process.env.NEXTAUTH_URL,
+      value: process.env.NEXTAUTH_URL || 'NOT_SET',
+    },
+  }
+
   const checks = {
     env: {
       AUTH_SECRET: !!process.env.AUTH_SECRET,
@@ -12,6 +40,7 @@ export async function GET() {
       DATABASE_URL: !!process.env.DATABASE_URL,
       NEXTAUTH_URL: !!process.env.NEXTAUTH_URL,
     },
+    envDetails, // Добавляем детальную информацию
     database: {
       connected: false,
       error: null as string | null,

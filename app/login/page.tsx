@@ -4,15 +4,12 @@ import { signIn } from 'next-auth/react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useEffect, useState, Suspense } from 'react'
 
-// Страница входа должна быть динамической
-export const dynamic = 'force-dynamic'
-
 function LoginForm() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard'
+  const callbackUrl = searchParams.get('callbackUrl') || '/'
   const error = searchParams.get('error')
 
   useEffect(() => {

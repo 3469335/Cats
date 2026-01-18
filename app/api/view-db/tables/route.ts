@@ -6,6 +6,8 @@ export const dynamic = 'force-dynamic'
 // Маппинг имен таблиц на модели Prisma (имя таблицы -> имя модели в Prisma)
 const tableToModelMap: { [key: string]: string } = {
   User: 'user',
+  Account: 'account',
+  Session: 'session',
   Note: 'note',
   Cat: 'cat',
   Category: 'category',
