@@ -48,11 +48,19 @@ if (!authConfig.hasDatabaseUrl) {
 function createAdapterWithLogging() {
   const baseAdapter = PrismaAdapter(prisma)
   
+  // Проверяем, что базовый адаптер существует и имеет необходимые методы
+  if (!baseAdapter) {
+    throw new Error('PrismaAdapter failed to initialize')
+  }
+  
   return {
     ...baseAdapter,
     async createUser(data: any) {
       try {
         console.log('[AUTH ADAPTER] Creating user:', { email: data.email, name: data.name })
+        if (!baseAdapter.createUser) {
+          throw new Error('createUser method is not available in adapter')
+        }
         const result = await baseAdapter.createUser(data)
         console.log('[AUTH ADAPTER] User created successfully:', { id: result.id, email: result.email })
         return result
@@ -69,6 +77,9 @@ function createAdapterWithLogging() {
     },
     async getUser(id: string) {
       try {
+        if (!baseAdapter.getUser) {
+          throw new Error('getUser method is not available in adapter')
+        }
         return await baseAdapter.getUser(id)
       } catch (error: any) {
         console.error('[AUTH ADAPTER] Error getting user:', { id, error: error?.message })
@@ -77,6 +88,9 @@ function createAdapterWithLogging() {
     },
     async getUserByEmail(email: string) {
       try {
+        if (!baseAdapter.getUserByEmail) {
+          throw new Error('getUserByEmail method is not available in adapter')
+        }
         return await baseAdapter.getUserByEmail(email)
       } catch (error: any) {
         console.error('[AUTH ADAPTER] Error getting user by email:', { email, error: error?.message })
@@ -85,6 +99,9 @@ function createAdapterWithLogging() {
     },
     async getUserByAccount({ providerAccountId, provider }: any) {
       try {
+        if (!baseAdapter.getUserByAccount) {
+          throw new Error('getUserByAccount method is not available in adapter')
+        }
         return await baseAdapter.getUserByAccount({ providerAccountId, provider })
       } catch (error: any) {
         console.error('[AUTH ADAPTER] Error getting user by account:', { providerAccountId, provider, error: error?.message })
@@ -93,6 +110,9 @@ function createAdapterWithLogging() {
     },
     async updateUser(data: any) {
       try {
+        if (!baseAdapter.updateUser) {
+          throw new Error('updateUser method is not available in adapter')
+        }
         return await baseAdapter.updateUser(data)
       } catch (error: any) {
         console.error('[AUTH ADAPTER] Error updating user:', { id: data.id, error: error?.message })
@@ -102,9 +122,13 @@ function createAdapterWithLogging() {
     async linkAccount(data: any) {
       try {
         console.log('[AUTH ADAPTER] Linking account:', { userId: data.userId, provider: data.provider })
+        if (!baseAdapter.linkAccount) {
+          throw new Error('linkAccount method is not available in adapter')
+        }
         const result = await baseAdapter.linkAccount(data)
-        console.log('[AUTH ADAPTER] Account linked successfully')
-        return result
+        console.log('[AUTH ADAPTER] Account linked successfully:', { userId: result?.userId, provider: result?.provider })
+        // linkAccount может возвращать void или AdapterAccount
+        return result as any
       } catch (error: any) {
         console.error('[AUTH ADAPTER] Error linking account:', error)
         console.error('[AUTH ADAPTER] Link account error details:', {
@@ -137,6 +161,9 @@ function createAdapterWithLogging() {
           })
         }
         
+        if (!baseAdapter.createSession) {
+          throw new Error('createSession method is not available in adapter')
+        }
         const result = await baseAdapter.createSession(data)
         console.log('[AUTH ADAPTER] ✅ Session created successfully:', {
           sessionToken: result.sessionToken?.substring(0, 20) + '...',
@@ -170,6 +197,9 @@ function createAdapterWithLogging() {
           return null
         }
         
+        if (!baseAdapter.getSessionAndUser) {
+          throw new Error('getSessionAndUser method is not available in adapter')
+        }
         const result = await baseAdapter.getSessionAndUser(sessionToken)
         if (result) {
           console.log('[AUTH ADAPTER] ✅ Session and user found:', {
@@ -219,6 +249,9 @@ function createAdapterWithLogging() {
     },
     async updateSession(data: any) {
       try {
+        if (!baseAdapter.updateSession) {
+          throw new Error('updateSession method is not available in adapter')
+        }
         return await baseAdapter.updateSession(data)
       } catch (error: any) {
         console.error('[AUTH ADAPTER] Error updating session:', error)
@@ -227,7 +260,12 @@ function createAdapterWithLogging() {
     },
     async deleteSession(sessionToken: string) {
       try {
-        return await baseAdapter.deleteSession(sessionToken)
+        if (!baseAdapter.deleteSession) {
+          throw new Error('deleteSession method is not available in adapter')
+        }
+        const result = await baseAdapter.deleteSession(sessionToken)
+        // deleteSession может возвращать void или AdapterSession
+        return result as any
       } catch (error: any) {
         console.error('[AUTH ADAPTER] Error deleting session:', { sessionToken, error: error?.message })
         throw error

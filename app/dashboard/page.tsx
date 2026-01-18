@@ -74,7 +74,7 @@ export default async function DashboardPage() {
                 fontWeight: '500',
               }}
             >
-              Мои промты
+              Мои котики
             </a>
             <a
               href="/view-db"

@@ -69,7 +69,7 @@ export default async function Home() {
                   borderRadius: '4px',
                 }}
               >
-                Мои промты
+                Мои котики
               </Link>
               <Link
                 href="/view-db"
