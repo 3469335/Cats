@@ -19,6 +19,13 @@ export default async function FavoritesPage({
 
   const searchQuery = searchParams.search || ''
 
+  // Получаем ID котиков, которые лайкнул текущий пользователь
+  const userVotes = await prisma.vote.findMany({
+    where: { userId },
+    select: { catId: true },
+  })
+  const likedCatIds = new Set(userVotes.map((v) => v.catId))
+
   const cats = await prisma.cat.findMany({
     where: {
       ownerId: userId,
@@ -43,13 +50,19 @@ export default async function FavoritesPage({
     take: 10,
   })
 
+  // Добавляем информацию о том, лайкнул ли пользователь
+  const catsWithLiked = cats.map((cat) => ({
+    ...cat,
+    likedByMe: likedCatIds.has(cat.id),
+  }))
+
   return (
     <div>
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Избранные котики</h1>
         <p className="text-muted-foreground">Всего: {cats.length}</p>
       </div>
-      <CatsList initialCats={cats} searchQuery={searchQuery} currentUserId={userId} />
+      <CatsList initialCats={catsWithLiked} searchQuery={searchQuery} currentUserId={userId} />
     </div>
   )
 }

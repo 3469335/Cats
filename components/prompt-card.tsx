@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { togglePublic, toggleFavorite, deleteCat } from '@/app/actions/cats'
 import { PromptDialog } from './prompt-dialog'
+import { LikeButton } from './like-button'
 import type { Cat } from '@prisma/client'
 
 interface PromptCardProps {
@@ -17,6 +18,7 @@ interface PromptCardProps {
       email: string
     }
     _count: { votes: number }
+    likedByMe?: boolean
   }
   currentUserId?: string | null
   onUpdate?: () => void
@@ -78,7 +80,7 @@ export function PromptCard({ cat, currentUserId, onUpdate }: PromptCardProps) {
             <div className="flex-1">
               <CardTitle className="text-xl">{cat.title}</CardTitle>
               <p className="mt-1 text-sm text-muted-foreground">
-                {cat.category.category} • {cat.visibility === 'PUBLIC' ? '🌐 Публичный' : '🔒 Приватный'} • Голосов: {cat._count.votes}
+                {cat.category.category} • {cat.visibility === 'PUBLIC' ? '🌐 Публичный' : '🔒 Приватный'}
                 {cat.owner && !isOwner && ` • Автор: ${cat.owner.name || cat.owner.email}`}
               </p>
             </div>
@@ -103,18 +105,27 @@ export function PromptCard({ cat, currentUserId, onUpdate }: PromptCardProps) {
         <CardContent>
           {cat.description && <p className="mb-2 text-sm text-muted-foreground">{cat.description}</p>}
           <p className="text-sm">{preview}</p>
-          {isOwner && (
-            <div className="mt-4 flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setIsDialogOpen(true)}>
-                <Pencil className="mr-2 h-4 w-4" />
-                Редактировать
-              </Button>
-              <Button variant="destructive" size="sm" onClick={handleDelete} disabled={isDeleteLoading}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                Удалить
-              </Button>
-            </div>
-          )}
+          <div className="mt-4 flex items-center justify-between">
+            <LikeButton
+              catId={cat.id}
+              initialLiked={cat.likedByMe || false}
+              initialCount={cat._count.votes}
+              isPublic={cat.visibility === 'PUBLIC'}
+              onUpdate={onUpdate}
+            />
+            {isOwner && (
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setIsDialogOpen(true)}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Редактировать
+                </Button>
+                <Button variant="destructive" size="sm" onClick={handleDelete} disabled={isDeleteLoading}>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Удалить
+                </Button>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
       <PromptDialog cat={cat} open={isDialogOpen} onOpenChange={setIsDialogOpen} onSuccess={onUpdate} />

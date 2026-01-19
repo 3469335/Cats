@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: { search?: string }
+  searchParams: { search?: string; sort?: 'popular' | 'recent' }
 }) {
   const user = await getCurrentUser()
   const userId = await getCurrentUserId()
@@ -19,9 +19,17 @@ export default async function DashboardPage({
   }
 
   const searchQuery = searchParams.search || ''
+  const sort = searchParams.sort || 'recent'
+
+  // Получаем ID котиков, которые лайкнул текущий пользователь
+  const userVotes = await prisma.vote.findMany({
+    where: { userId },
+    select: { catId: true },
+  })
+  const likedCatIds = new Set(userVotes.map((v) => v.catId))
 
   // Показываем ВСЕХ котиков в БД (не только пользователя)
-  const cats = await prisma.cat.findMany({
+  let cats = await prisma.cat.findMany({
     where: {
       ...(searchQuery && {
         OR: [
@@ -44,21 +52,47 @@ export default async function DashboardPage({
         select: { votes: true },
       },
     },
-    orderBy: {
-      updatedAt: 'desc',
-    },
-    take: 10,
+    orderBy:
+      sort === 'popular'
+        ? {
+            createdAt: 'desc', // Сначала по дате, потом отсортируем по лайкам
+          }
+        : {
+            createdAt: 'desc',
+          },
   })
+
+  // Добавляем информацию о том, лайкнул ли пользователь
+  let catsWithLiked = cats.map((cat) => ({
+    ...cat,
+    likedByMe: likedCatIds.has(cat.id),
+  }))
+
+  // Сортировка по популярности (количество лайков) - сначала котики с большим количеством лайков
+  if (sort === 'popular') {
+    catsWithLiked = catsWithLiked.sort((a, b) => {
+      const likesA = a._count.votes
+      const likesB = b._count.votes
+      // Сначала по количеству лайков (убывание), потом по дате создания (убывание)
+      if (likesA !== likesB) {
+        return likesB - likesA
+      }
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    })
+  }
+
+  // Ограничиваем количество после сортировки
+  catsWithLiked = catsWithLiked.slice(0, 10)
 
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Все котики</h1>
-          <p className="text-muted-foreground">Всего: {cats.length}</p>
+          <p className="text-muted-foreground">Всего: {catsWithLiked.length}</p>
         </div>
       </div>
-      <CatsList initialCats={cats} searchQuery={searchQuery} currentUserId={userId} />
+      <CatsList initialCats={catsWithLiked} searchQuery={searchQuery} currentUserId={userId} sort={sort} />
     </div>
   )
 }

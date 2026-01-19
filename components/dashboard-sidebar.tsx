@@ -7,8 +7,8 @@ import { cn } from '@/lib/utils'
 
 const navigation = [
   { name: 'Все котики', href: '/dashboard', icon: Home },
-  { name: 'Мои котики', href: '/dashboard/my-cats', icon: User },
   { name: 'Публичные', href: '/dashboard/public', icon: Globe },
+  { name: 'Мои котики', href: '/dashboard/my-cats', icon: User },
   { name: 'Избранное', href: '/dashboard/favorites', icon: Star },
   { name: 'История', href: '/dashboard/history', icon: History },
   { name: 'Настройки', href: '/dashboard/settings', icon: Settings },
