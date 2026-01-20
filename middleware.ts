@@ -44,7 +44,10 @@ export default async function middleware(req: NextRequest) {
   }
 
   // Публичные маршруты (не требуют авторизации)
-  const publicRoutes = ['/login']
+  const publicRoutes = ['/login', '/']
+  
+  // Публичные маршруты с динамическими параметрами
+  const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith('/cats/')
   
   // Исключаем API маршруты NextAuth из middleware (они обрабатываются отдельно)
   if (pathname.startsWith('/api/auth/')) {
@@ -52,7 +55,7 @@ export default async function middleware(req: NextRequest) {
   }
   
   // Если это публичный маршрут, пропускаем
-  if (publicRoutes.includes(pathname)) {
+  if (isPublicRoute) {
     // Если пользователь авторизован и пытается зайти на /login, перенаправляем на главную
     if (pathname === '/login' && isLoggedIn) {
       console.log('[MIDDLEWARE] User is logged in, redirecting from /login to /')
@@ -61,7 +64,7 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
-  // Защищенные маршруты (все остальные, включая главную страницу)
+  // Защищенные маршруты (все остальные, кроме публичных)
   // Если пользователь не авторизован, перенаправляем на /login
   if (!isLoggedIn) {
     console.log('[MIDDLEWARE] User not logged in, redirecting to /login from', pathname)
