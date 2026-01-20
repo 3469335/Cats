@@ -1,6 +1,6 @@
 # Cats - сервис обмена информацией о котиках
 
-Минимальный рабочий проект на Next.js (App Router) + Prisma + NeonDB (PostgreSQL), готовый к деплою на Vercel.
+# Минимальный рабочий проект на Next.js (App Router) + Prisma + NeonDB (PostgreSQL), готовый к деплою на Vercel.
 
 ## Технологии
 
